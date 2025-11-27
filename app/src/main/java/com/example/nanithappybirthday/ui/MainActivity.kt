@@ -30,9 +30,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.nanithappybirthday.model.BirthdayData
 import com.example.nanithappybirthday.ui.theme.NanitHappyBirthdayTheme
+import com.example.nanithappybirthday.ui.theme.TextColor
 import com.example.nanithappybirthday.viewmodel.MainViewModel
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -50,7 +53,8 @@ class MainActivity : ComponentActivity() {
                 MainScreen(
                     ipAddress = uiState.ipAddress,
                     onIpAddressChange = viewModel::saveIpAddress,
-                    birthdayData = uiState.birthdayData)
+                    birthdayData = uiState.birthdayData
+                )
             }
         }
     }
@@ -58,19 +62,27 @@ class MainActivity : ComponentActivity() {
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
-fun MainScreen(ipAddress: String, onIpAddressChange: (String) -> Unit, birthdayData: String) {
+fun MainScreen(
+    ipAddress: String,
+    onIpAddressChange: (String) -> Unit,
+    birthdayData: BirthdayData?
+) {
     var showDialog by remember { mutableStateOf(false) }
 
     Scaffold { _ ->
         Box(modifier = Modifier.fillMaxSize()) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                Column() {
-                    Text("Current IP: ${ipAddress.ifEmpty { "Not set" }}")
-                    Text("Birthday data: ${birthdayData}")
-                }
+            if (birthdayData != null) {
+                BirthdayScreen(birthdayData)
+            } else {
+                Text(
+                    if (ipAddress.isEmpty()) "No IP address was set yet. Press the settings button to configure it." else "Oops! No birthday data was received.",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = TextColor,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .padding(30.dp)
+                )
             }
 
             IconButton(
@@ -140,12 +152,30 @@ fun IpAddressDialog(
 
 @Preview
 @Composable
-fun ScreenPreview(){
-    MainScreen("192.168.1.115", {}, "birthday")
+fun ScreenPreviewNoIP() {
+    NanitHappyBirthdayTheme {
+        MainScreen("", {}, null)
+    }
 }
 
 @Preview
 @Composable
-fun DialogPreview(){
+fun ScreenPreviewNoBirthdayData() {
+    NanitHappyBirthdayTheme {
+        MainScreen("127.0.0.1", {}, null)
+    }
+}
+
+@Preview
+@Composable
+fun ScreenPreview() {
+    NanitHappyBirthdayTheme {
+        MainScreen("127.0.0.1", {}, BirthdayData("keren", 1760044800, "fox"))
+    }
+}
+
+@Preview
+@Composable
+fun DialogPreview() {
     IpAddressDialog("192.168.1.115", {}, {})
 }

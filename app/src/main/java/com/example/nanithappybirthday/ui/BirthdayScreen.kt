@@ -25,8 +25,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.example.nanithappybirthday.R
+import com.example.nanithappybirthday.model.Age
 import com.example.nanithappybirthday.model.BirthdayData
 import com.example.nanithappybirthday.ui.theme.NanitHappyBirthdayTheme
 import com.example.nanithappybirthday.ui.theme.TextColor
@@ -35,9 +35,7 @@ import com.example.nanithappybirthday.ui.theme.TextColor
 fun BirthdayScreen(birthdayData: BirthdayData) {
     val theme = themes[birthdayData.theme]
 
-    if (theme == null) {
-        // todo show error
-    } else {
+    if (theme != null) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -57,12 +55,14 @@ fun BirthdayScreen(birthdayData: BirthdayData) {
                 ) {
                     AgeSection(
                         birthdayData.name,
+                        birthdayData.getFormattedAge(),
                         modifier = Modifier
                             .padding(top = 20.dp, bottom = 15.dp)
                             .weight(1f)
                     )
 
-                    BabyImageSection(theme.babyImage, modifier = Modifier.weight(1f))
+                    BabyImageSection(theme.babyImage,
+                        modifier = Modifier.weight(1f))
 
                     Spacer(modifier = Modifier.weight(1f))
                 }
@@ -76,6 +76,7 @@ fun BirthdayScreen(birthdayData: BirthdayData) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .align(Alignment.BottomCenter),
+                alignment = Alignment.BottomCenter,
                 contentScale = ContentScale.FillWidth
             )
         }
@@ -83,50 +84,54 @@ fun BirthdayScreen(birthdayData: BirthdayData) {
 }
 
 @Composable
-fun AgeSection(name: String, modifier: Modifier = Modifier) {
-    Column(
-        modifier = modifier.wrapContentHeight(),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(
-            modifier = Modifier.widthIn(max = 200.dp),
-            text = "today $name is".uppercase(),
-            color = TextColor,
-            textAlign = TextAlign.Center,
-            style = MaterialTheme.typography.bodyLarge
-        )
+fun AgeSection(name: String, age: Age, modifier: Modifier = Modifier) {
+    val ageAsset = numberAssets[age.value]
 
-        Spacer(modifier = Modifier.height(13.dp))
-
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Image(
-                painter = painterResource(id = R.drawable.left_swirls),
-                contentDescription = null
+    if (ageAsset != null) {
+        Column(
+            modifier = modifier.wrapContentHeight(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                modifier = Modifier.widthIn(max = 200.dp),
+                text = "today $name is".uppercase(),
+                color = TextColor,
+                textAlign = TextAlign.Center,
+                style = MaterialTheme.typography.bodyLarge
             )
 
-            Spacer(modifier = Modifier.width(22.dp))
+            Spacer(modifier = Modifier.height(13.dp))
 
-            Image(
-                painter = painterResource(id = R.drawable.six),
-                contentDescription = null
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Image(
+                    painter = painterResource(id = R.drawable.left_swirls),
+                    contentDescription = null
+                )
 
-            Spacer(modifier = Modifier.width(22.dp))
+                Spacer(modifier = Modifier.width(22.dp))
 
-            Image(
-                painter = painterResource(id = R.drawable.right_swirls),
-                contentDescription = null
+                Image(
+                    painter = painterResource(id = ageAsset),
+                    contentDescription = null
+                )
+
+                Spacer(modifier = Modifier.width(22.dp))
+
+                Image(
+                    painter = painterResource(id = R.drawable.right_swirls),
+                    contentDescription = null
+                )
+            }
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            Text(
+                text = "${age.getFormattedUnit()} old".uppercase(),
+                textAlign = TextAlign.Center,
+                color = TextColor,
+                style = MaterialTheme.typography.bodyMedium
             )
         }
-
-        Spacer(modifier = Modifier.height(14.dp))
-
-        Text(
-            text = "months old".uppercase(),
-            textAlign = TextAlign.Center,
-            color = TextColor,
-            style = MaterialTheme.typography.bodyMedium
-        )
     }
 }
 
@@ -154,7 +159,7 @@ fun BabyImageSection(
 @Composable
 fun PelicanPreview() {
     NanitHappyBirthdayTheme {
-        BirthdayScreen(BirthdayData("keren", 1760044800, "pelican"))
+        BirthdayScreen(BirthdayData("geffen arbel", 1688544000, "pelican"))
     }
 }
 
@@ -162,7 +167,7 @@ fun PelicanPreview() {
 @Composable
 fun FoxPreview() {
     NanitHappyBirthdayTheme {
-        BirthdayScreen(BirthdayData("keren", 1760044800, "fox"))
+        BirthdayScreen(BirthdayData("tagel arbel", 1737072000, "fox"))
     }
 }
 

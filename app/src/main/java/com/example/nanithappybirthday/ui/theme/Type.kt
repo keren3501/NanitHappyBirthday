@@ -10,14 +10,14 @@ val Typography = Typography(
     bodyLarge = TextStyle(
         fontFamily = FontFamily.SansSerif,
         fontWeight = FontWeight.W500,
-        fontSize = 30.sp,
+        fontSize = 27.sp,
         letterSpacing = (-0.42).sp
     ),
 
     bodyMedium = TextStyle(
         fontFamily = FontFamily.SansSerif,
         fontWeight = FontWeight.W500,
-        fontSize = 24.sp,
+        fontSize = 22.sp,
         letterSpacing = (-0.36).sp
     )
 )

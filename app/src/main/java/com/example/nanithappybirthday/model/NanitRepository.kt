@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import com.google.gson.Gson
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
@@ -15,8 +16,6 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
-import java.net.HttpURLConnection
-import java.net.URL
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -28,6 +27,7 @@ class NanitRepository @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
     private val dataStore: DataStore<Preferences> = context.dataStore
+    private val gson = Gson()
 
     private val ipKey = stringPreferencesKey("ip_address")
     private val lastBirthdayData = stringPreferencesKey("birthday_data")
@@ -44,19 +44,26 @@ class NanitRepository @Inject constructor(
         }.first()
     }
 
-    suspend fun saveLastBirthdayData(result: String) {
+    suspend fun saveLastBirthdayData(result: BirthdayData) {
         dataStore.edit { preferences ->
-            preferences[lastBirthdayData] = result
+            preferences[lastBirthdayData] = gson.toJson(result)
         }
     }
 
-    suspend fun getLastBirthdayData(): String {
-        return dataStore.data.map { preferences ->
-            preferences[lastBirthdayData] ?: ""
+    suspend fun getLastBirthdayData(): BirthdayData? {
+        val lastBirthdayDataJson = dataStore.data.map { preferences ->
+            preferences[lastBirthdayData]
         }.first()
+
+        return try {
+            gson.fromJson(lastBirthdayDataJson, BirthdayData::class.java)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
     }
 
-    suspend fun makeHttpRequest(): Result<String> = withContext(Dispatchers.IO) {
+    suspend fun makeHttpRequest(): Result<BirthdayData> = withContext(Dispatchers.IO) {
         try {
             val ip = getIpAddress()
             if (ip.isEmpty()) {
@@ -77,8 +84,9 @@ class NanitRepository @Inject constructor(
 
             client.newCall(request).execute().use { response ->
                 if (response.isSuccessful) {
-                    val body = response.body?.string() ?: ""
-                    Result.success(body)
+                    val body = response.body?.string()
+                    val birthdayData = gson.fromJson(body, BirthdayData::class.java)
+                    Result.success(birthdayData)
                 } else {
                     Result.failure(Exception("HTTP Error: ${response.code} - ${response.body?.string()}"))
                 }

@@ -3,6 +3,7 @@ package com.example.nanithappybirthday.viewmodel
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.nanithappybirthday.model.BirthdayData
 import com.example.nanithappybirthday.model.NanitRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -14,7 +15,7 @@ import javax.inject.Inject
 
 data class MainUiState(
     val ipAddress: String = "",
-    val birthdayData: String = ""
+    val birthdayData: BirthdayData? = null
 )
 
 @HiltViewModel
@@ -45,7 +46,7 @@ class MainViewModel @Inject constructor(
         // Make request if:
         // 1. No cached result exists, OR
         // 2. IP exists but doesn't match the last requested IP
-        if (savedIp.isNotEmpty() && savedResult.isEmpty()) {
+        if (savedIp.isNotEmpty() && savedResult == null) {
             requestBirthdayFromServer()
         }
     }
