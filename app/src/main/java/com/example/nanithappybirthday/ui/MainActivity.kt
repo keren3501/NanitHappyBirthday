@@ -76,7 +76,7 @@ fun MainScreen(ipAddress: String, onIpAddressChange: (String) -> Unit, birthdayD
             IconButton(
                 onClick = { showDialog = true },
                 modifier = Modifier
-                    .align(Alignment.BottomStart)
+                    .align(Alignment.TopStart)
                     .padding(16.dp)
             ) {
                 Icon(
