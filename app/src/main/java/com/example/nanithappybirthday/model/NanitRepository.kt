@@ -13,6 +13,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
@@ -31,13 +32,26 @@ class NanitRepository @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
 
+    companion object {
+        const val TAG = "NanitRepository"
+
+        const val IMAGES_DIR_NAME = "baby_images"
+        const val JPG_SUFFIX = ".jpg"
+
+        const val PORT = 8080
+        const val REQUEST_PATH = "/nanit"
+        const val REQUEST_MESSAGE = "HappyBirthday"
+        const val CONNECT_TIME_OUT_S: Long = 10
+    }
+
     private val dataStore: DataStore<Preferences> = context.dataStore
     private val gson = Gson()
 
     private val ipKey = stringPreferencesKey("ip_address")
     private val lastBirthdayData = stringPreferencesKey("birthday_data")
+    private val babyImagePath = stringPreferencesKey("baby_image_path")
 
-    private val babyImageDir = File(context.filesDir, "baby_images")
+    private val babyImageDir = File(context.filesDir, IMAGES_DIR_NAME)
 
     init {
         babyImageDir.apply { mkdirs() }
@@ -57,9 +71,14 @@ class NanitRepository @Inject constructor(
             }
         }
 
-    val ipAddressFlow: Flow<String?> = dataStore.data
+    val ipAddressFlow: Flow<String> = dataStore.data
         .map { preferences ->
-            preferences[ipKey]
+            preferences[ipKey] ?: ""
+        }
+
+    val babyImagePathFlow: Flow<String?> = dataStore.data
+        .map { preferences ->
+            preferences[babyImagePath]
         }
 
     suspend fun saveIpAddress(ip: String) {
@@ -74,6 +93,16 @@ class NanitRepository @Inject constructor(
         }
     }
 
+    suspend fun saveBabyImagePath(imagePath: String?) {
+        dataStore.edit { preferences ->
+            if (imagePath == null) {
+                preferences.remove(babyImagePath)
+            } else {
+                preferences[babyImagePath] = imagePath
+            }
+        }
+    }
+
     // endregion
 
     // region Request
@@ -82,37 +111,41 @@ class NanitRepository @Inject constructor(
         try {
             val ip = ipAddressFlow.firstOrNull()
             if (ip.isNullOrEmpty()) {
-                Log.d("NanitRepo", "IP address not set")
+                Log.d(TAG, "IP address not set")
                 return
             }
 
             val client = OkHttpClient.Builder()
-                .connectTimeout(10, TimeUnit.SECONDS)
+                .connectTimeout(CONNECT_TIME_OUT_S, TimeUnit.SECONDS)
                 .build()
 
             val request = Request.Builder()
-                .url("ws://$ip:8080/nanit")
+                .url("ws://$ip:$PORT/$REQUEST_PATH")
                 .build()
 
             client.newWebSocket(request, object : okhttp3.WebSocketListener() {
                 override fun onOpen(webSocket: okhttp3.WebSocket, response: okhttp3.Response) {
-                    Log.d("NanitRepo", "WebSocket connected")
-                    webSocket.send("HappyBirthday")
+                    Log.d(TAG, "WebSocket connected")
+                    webSocket.send(REQUEST_MESSAGE)
                 }
 
                 override fun onMessage(webSocket: okhttp3.WebSocket, text: String) {
-                    Log.d("NanitRepo", "Received: $text")
+                    Log.d(TAG, "Received: $text")
                     try {
-                        val birthdayData = gson.fromJson(text, BirthdayData::class.java)
-
-                        removeAllBabyImages()
                         CoroutineScope(Dispatchers.IO).launch {
-                            saveLastBirthdayData(birthdayData)
+                            val birthdayData = gson.fromJson(text, BirthdayData::class.java)
+
+                            if (!birthdayData.equals(birthdayDataFlow.first())) {
+                                removeAllBabyImages()
+                                saveBabyImagePath(null)
+
+                                saveLastBirthdayData(birthdayData)
+                                Log.d(TAG, "Success: $birthdayData")
+                            }
                         }
 
-                        Log.d("NanitRepo", "Success: $birthdayData")
                     } catch (e: Exception) {
-                        Log.d("NanitRepo", "Failed: ${e.message}")
+                        Log.d(TAG, "Failed: ${e.message}")
                     }
                     webSocket.close(1000, "Done")
                 }
@@ -122,15 +155,15 @@ class NanitRepository @Inject constructor(
                     t: Throwable,
                     response: okhttp3.Response?
                 ) {
-                    Log.d("NanitRepo", "WebSocket failed: ${t.message}")
+                    Log.d(TAG, "WebSocket failed: ${t.message}")
                 }
 
                 override fun onClosed(webSocket: okhttp3.WebSocket, code: Int, reason: String) {
-                    Log.d("NanitRepo", "WebSocket closed: $code - $reason")
+                    Log.d(TAG, "WebSocket closed: $code - $reason")
                 }
             })
         } catch (e: Exception) {
-            Log.d("NanitRepo", "Failed: ${e.message}")
+            Log.d(TAG, "Failed: ${e.message}")
         }
     }
 
@@ -143,21 +176,10 @@ class NanitRepository @Inject constructor(
             removeAllBabyImages()
             val newImagePath = saveImageToInternalStorage(
                 babyImageUri,
-                "image_${System.currentTimeMillis()}.jpg"
+                "${System.currentTimeMillis()}$JPG_SUFFIX"
             )
 
-            val currBirthdayData = birthdayDataFlow.firstOrNull()
-
-            if (currBirthdayData != null) {
-                saveLastBirthdayData(
-                    BirthdayData(
-                        currBirthdayData.name,
-                        currBirthdayData.dob,
-                        currBirthdayData.theme,
-                        newImagePath
-                    )
-                )
-            }
+            saveBabyImagePath(newImagePath)
         }
     }
 

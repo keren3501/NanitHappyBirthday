@@ -9,7 +9,6 @@ data class BirthdayData(
     val name: String,
     val dob: Long,
     val theme: String,
-    val imagePath: String? = null
 ) {
 
     private fun getAgeAsMonths(): Long {
@@ -28,5 +27,4 @@ data class BirthdayData(
             Age((ageAsMonths / 12).toInt(), AgeUnit.YEAR)
         }
     }
-
 }

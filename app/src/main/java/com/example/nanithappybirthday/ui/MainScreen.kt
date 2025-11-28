@@ -19,9 +19,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.nanithappybirthday.R
 import com.example.nanithappybirthday.model.BirthdayData
 import com.example.nanithappybirthday.ui.general.TextFieldDialog
 import com.example.nanithappybirthday.ui.theme.NanitHappyBirthdayTheme
@@ -33,6 +35,7 @@ fun MainScreen(
     ipAddress: String,
     onIpAddressChange: (String) -> Unit,
     birthdayData: BirthdayData?,
+    babyImagePath: String? = null,
     onUploadImageClicked: () -> Unit = {}
 ) {
     var showDialog by remember { mutableStateOf(false) }
@@ -40,10 +43,10 @@ fun MainScreen(
     Scaffold { _ ->
         Box(modifier = Modifier.fillMaxSize()) {
             if (birthdayData != null) {
-                BirthdayScreen(birthdayData, onUploadImageClicked)
+                BirthdayScreen(birthdayData, babyImagePath, onUploadImageClicked)
             } else {
                 Text(
-                    if (ipAddress.isEmpty()) "No IP address was set yet. Press the settings button to configure it." else "Oops! No birthday data was received.",
+                    stringResource(if(ipAddress.isEmpty()) R.string.no_ip_msg else R.string.no_birthday_msg),
                     style = MaterialTheme.typography.bodyLarge,
                     color = TextColor,
                     textAlign = TextAlign.Center,
@@ -88,13 +91,14 @@ fun EnterIpDialog(
     onConfirm: (String) -> Unit,
     onDismiss: () -> Unit
 ) {
-    TextFieldDialog(title = "Enter IP Address",
-        textFieldLabel = "IP Address",
+    TextFieldDialog(
+        title = stringResource(R.string.enter_ip_title),
         currValue = currentIp,
-        confirmText = "Save & Request",
+        confirmText = stringResource(R.string.save_button_text),
         onConfirm = onConfirm,
-        dismissText = "Cancel",
-        onDismiss = onDismiss)
+        dismissText = stringResource(R.string.cancel_button_text),
+        onDismiss = onDismiss
+    )
 }
 
 @Preview

@@ -33,6 +33,7 @@ class MainActivity : ComponentActivity() {
                     ipAddress = uiState.ipAddress,
                     onIpAddressChange = viewModel::saveIpAddress,
                     birthdayData = uiState.birthdayData,
+                    babyImagePath = uiState.babyImagePath,
                     onUploadImageClicked = { imagePicker.launch("image/*") }
                 )
             }

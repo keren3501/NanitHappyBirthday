@@ -9,13 +9,14 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class MainUiState(
     val ipAddress: String = "",
-    val birthdayData: BirthdayData? = null
+    val birthdayData: BirthdayData? = null,
+    val babyImagePath: String? = null
 )
 
 @HiltViewModel
@@ -28,26 +29,30 @@ class MainViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            repo.birthdayDataFlow.collect { data ->
-                _uiState.update { it.copy(birthdayData = data) }
+            combine(
+                repo.birthdayDataFlow,
+                repo.ipAddressFlow,
+                repo.babyImagePathFlow
+            ) { birthdayData, ip, imagePath ->
+                MainUiState(
+                    birthdayData = birthdayData,
+                    ipAddress = ip,
+                    babyImagePath = imagePath
+                )
+            }.collect {
+                _uiState.value = it
             }
         }
 
-        viewModelScope.launch {
-            repo.ipAddressFlow.collect { ip ->
-                if (!ip.isNullOrEmpty()) {
-                    _uiState.update { it.copy(ipAddress = ip) }
-
-                    requestBirthdayFromServer()
-                }
-            }
-        }
+        requestBirthdayFromServer()
     }
 
     fun saveIpAddress(ip: String) {
         viewModelScope.launch {
             repo.saveIpAddress(ip)
         }
+
+        requestBirthdayFromServer()
     }
 
     private fun requestBirthdayFromServer() {

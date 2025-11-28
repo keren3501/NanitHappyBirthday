@@ -5,9 +5,11 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -24,9 +26,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import coil.compose.rememberAsyncImagePainter
 import com.example.nanithappybirthday.R
@@ -38,11 +44,36 @@ import java.io.File
 import kotlin.math.cos
 import kotlin.math.sin
 
-private val MAIN_COLUMN_WIDTH = 200.dp
 private const val UPLOAD_IMG_DEGREE = 45.0
 
+private val BABY_IMG_SIZE = 200.dp
+private val LOGO_HEIGHT = 20.dp
+private val LOGO_TOP_MARGIN = 15.dp
+
+fun calcAgeSectionOffset(totalScreenHeight: Dp): Dp {
+    val babyImageSectionSize = (BABY_IMG_SIZE + LOGO_HEIGHT + LOGO_TOP_MARGIN)
+    val availableSpaceForAgeSection = (totalScreenHeight / 2) - (babyImageSectionSize / 2)
+    val offset = (babyImageSectionSize / 2) + (availableSpaceForAgeSection / 2)
+
+    return -offset
+}
+
+fun calcUploadIconOffset(): DpOffset {
+    val angleRadians = Math.toRadians(UPLOAD_IMG_DEGREE)
+    val radius = BABY_IMG_SIZE / 2
+
+    val xOffsetDp = (radius * cos(angleRadians).toFloat())
+    val yOffsetDp = (radius * sin(angleRadians).toFloat())
+
+    return DpOffset(xOffsetDp, -yOffsetDp)
+}
+
 @Composable
-fun BirthdayScreen(birthdayData: BirthdayData, onUploadImageClicked: () -> Unit = {}) {
+fun BirthdayScreen(
+    birthdayData: BirthdayData,
+    babyImagePath: String? = null,
+    onUploadImageClicked: () -> Unit = {}
+) {
     val theme = themes[birthdayData.theme]
 
     if (theme != null) {
@@ -61,35 +92,40 @@ fun BirthdayScreen(birthdayData: BirthdayData, onUploadImageClicked: () -> Unit 
                         .width(50.dp)
                 )
 
-                Column(
+                BoxWithConstraints(
                     modifier = Modifier
-                        .width(MAIN_COLUMN_WIDTH),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                        .width(BABY_IMG_SIZE)
+                        .fillMaxHeight()
                 ) {
-                    AgeSection(
-                        birthdayData.name,
-                        birthdayData.getFormattedAge(),
+                    Box(
                         modifier = Modifier
-                            .weight(1f)
-                            .padding(top = 20.dp, bottom = 15.dp)
-                    )
-
-                    Column(
-                        modifier = Modifier.weight(1f),
-                        verticalArrangement = Arrangement.Center,
-                        horizontalAlignment = Alignment.CenterHorizontally
+                            .fillMaxSize()
+                            .padding(top = 5.dp)
+                            .offset(y = calcAgeSectionOffset(maxHeight)),
+                        contentAlignment = Alignment.Center
                     ) {
-                        BabyImageSection(theme, birthdayData.imagePath, onUploadImageClicked)
-
-                        Spacer(modifier = Modifier.height(15.dp))
-
-                        Image(
-                            painter = painterResource(id = R.drawable.nanit),
-                            contentDescription = null
+                        AgeSection(
+                            birthdayData.name,
+                            birthdayData.getFormattedAge()
                         )
                     }
 
-                    Spacer(modifier = Modifier.weight(1f))
+                    Column(
+                        modifier = Modifier
+                            .align(Alignment.Center),
+                        verticalArrangement = Arrangement.Center,
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        BabyImageSection(theme, babyImagePath, onUploadImageClicked)
+
+                        Spacer(modifier = Modifier.height(LOGO_TOP_MARGIN))
+
+                        Image(
+                            painter = painterResource(id = R.drawable.nanit),
+                            contentDescription = null,
+                            modifier = Modifier.height(LOGO_HEIGHT)
+                        )
+                    }
                 }
 
                 Spacer(
@@ -113,6 +149,7 @@ fun BirthdayScreen(birthdayData: BirthdayData, onUploadImageClicked: () -> Unit 
 
 @Composable
 fun AgeSection(name: String, age: Age, modifier: Modifier = Modifier) {
+    val context = LocalContext.current
     val ageAsset = numberAssets[age.value]
 
     if (ageAsset != null) {
@@ -122,7 +159,7 @@ fun AgeSection(name: String, age: Age, modifier: Modifier = Modifier) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "today $name is".uppercase(),
+                text = stringResource(R.string.today_is_msg, name.uppercase()),
                 color = TextColor,
                 textAlign = TextAlign.Center,
                 style = MaterialTheme.typography.bodyMedium
@@ -155,7 +192,7 @@ fun AgeSection(name: String, age: Age, modifier: Modifier = Modifier) {
             Spacer(modifier = Modifier.height(14.dp))
 
             Text(
-                text = "${age.getFormattedUnit()} old".uppercase(),
+                text = stringResource(R.string.old_msg, age.getFormattedUnit(context)),
                 textAlign = TextAlign.Center,
                 color = TextColor,
                 style = MaterialTheme.typography.bodySmall
@@ -176,7 +213,9 @@ fun BabyImageSection(
                 rememberAsyncImagePainter(model = imagePath)
             else painterResource(id = babyTheme.babyImage),
             contentDescription = null,
-            modifier = Modifier.clip(CircleShape).size(MAIN_COLUMN_WIDTH),
+            modifier = Modifier
+                .clip(CircleShape)
+                .size(BABY_IMG_SIZE),
             contentScale = ContentScale.Crop
         )
 
@@ -185,18 +224,14 @@ fun BabyImageSection(
             contentDescription = null,
         )
 
-        val angleRadians = Math.toRadians(UPLOAD_IMG_DEGREE)
-        val radius = MAIN_COLUMN_WIDTH / 2
-
-        val xOffsetDp = (radius * cos(angleRadians).toFloat())
-        val yOffsetDp = (radius * sin(angleRadians).toFloat())
+        val uploadIconOffset = calcUploadIconOffset()
 
         Image(
             painter = painterResource(id = babyTheme.uploadImage),
             contentDescription = null,
             modifier = Modifier
                 .size(36.dp)
-                .offset(xOffsetDp, -yOffsetDp)
+                .offset(uploadIconOffset.x, uploadIconOffset.y)
                 .clickable { onUploadImageClicked() }
         )
     }
