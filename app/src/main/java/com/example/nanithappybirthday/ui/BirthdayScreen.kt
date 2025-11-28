@@ -100,7 +100,7 @@ fun BirthdayScreen(
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
-                            .padding(top = 5.dp)
+                            .padding(top = 20.dp, bottom = 15.dp)
                             .offset(y = calcAgeSectionOffset(maxHeight)),
                         contentAlignment = Alignment.Center
                     ) {
