@@ -2,6 +2,7 @@ package com.example.nanithappybirthday.ui
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,28 +11,38 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import coil.compose.rememberAsyncImagePainter
 import com.example.nanithappybirthday.R
 import com.example.nanithappybirthday.model.Age
 import com.example.nanithappybirthday.model.BirthdayData
 import com.example.nanithappybirthday.ui.theme.NanitHappyBirthdayTheme
 import com.example.nanithappybirthday.ui.theme.TextColor
+import java.io.File
+import kotlin.math.cos
+import kotlin.math.sin
+
+private val MAIN_COLUMN_WIDTH = 200.dp
+private const val UPLOAD_IMG_DEGREE = 45.0
 
 @Composable
-fun BirthdayScreen(birthdayData: BirthdayData) {
+fun BirthdayScreen(birthdayData: BirthdayData, onUploadImageClicked: () -> Unit = {}) {
     val theme = themes[birthdayData.theme]
 
     if (theme != null) {
@@ -45,14 +56,14 @@ fun BirthdayScreen(birthdayData: BirthdayData) {
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.Top
             ) {
-                Spacer(modifier = Modifier
-                    .width(50.dp)
-                    .weight(1f))
+                Spacer(
+                    modifier = Modifier
+                        .width(50.dp)
+                )
 
                 Column(
                     modifier = Modifier
-                        .wrapContentWidth()
-                        .weight(2f),
+                        .width(MAIN_COLUMN_WIDTH),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     AgeSection(
@@ -63,17 +74,28 @@ fun BirthdayScreen(birthdayData: BirthdayData) {
                             .padding(top = 20.dp, bottom = 15.dp)
                     )
 
-                    BabyImageSection(
-                        theme.babyImage,
-                        modifier = Modifier.weight(1f)
-                    )
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.Center,
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        BabyImageSection(theme, birthdayData.imagePath, onUploadImageClicked)
+
+                        Spacer(modifier = Modifier.height(15.dp))
+
+                        Image(
+                            painter = painterResource(id = R.drawable.nanit),
+                            contentDescription = null
+                        )
+                    }
 
                     Spacer(modifier = Modifier.weight(1f))
                 }
 
-                Spacer(modifier = Modifier
-                    .width(50.dp)
-                    .weight(1f))
+                Spacer(
+                    modifier = Modifier
+                        .width(50.dp)
+                )
             }
 
             Image(
@@ -103,35 +125,30 @@ fun AgeSection(name: String, age: Age, modifier: Modifier = Modifier) {
                 text = "today $name is".uppercase(),
                 color = TextColor,
                 textAlign = TextAlign.Center,
-                style = MaterialTheme.typography.bodyLarge
+                style = MaterialTheme.typography.bodyMedium
             )
 
             Spacer(modifier = Modifier.height(13.dp))
 
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
-            ) {
+            Box(modifier = Modifier.fillMaxWidth()) {
                 Image(
                     painter = painterResource(id = R.drawable.left_swirls),
                     contentDescription = null,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.align(Alignment.CenterStart)
                 )
-
-                Spacer(modifier = Modifier.width(15.dp))
-
-                Image(
-                    painter = painterResource(id = ageAsset),
-                    contentDescription = null,
-                    modifier = Modifier.height(80.dp).weight(2f)
-                )
-
-                Spacer(modifier = Modifier.width(15.dp))
 
                 Image(
                     painter = painterResource(id = R.drawable.right_swirls),
                     contentDescription = null,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.align(Alignment.CenterEnd)
+                )
+
+                Image(
+                    painter = painterResource(id = ageAsset),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .height(88.dp)
+                        .align(Alignment.Center)
                 )
             }
 
@@ -141,7 +158,7 @@ fun AgeSection(name: String, age: Age, modifier: Modifier = Modifier) {
                 text = "${age.getFormattedUnit()} old".uppercase(),
                 textAlign = TextAlign.Center,
                 color = TextColor,
-                style = MaterialTheme.typography.bodyMedium
+                style = MaterialTheme.typography.bodySmall
             )
         }
     }
@@ -149,22 +166,38 @@ fun AgeSection(name: String, age: Age, modifier: Modifier = Modifier) {
 
 @Composable
 fun BabyImageSection(
-    babyImage: Int,
-    modifier: Modifier = Modifier
+    babyTheme: ThemeAssets,
+    imagePath: String?,
+    onUploadImageClicked: () -> Unit
 ) {
-    Column(modifier = modifier,
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally) {
+    Box(contentAlignment = Alignment.Center) {
         Image(
-            painter = painterResource(id = babyImage),
-            contentDescription = null
+            painter = if (imagePath != null && File(imagePath).exists())
+                rememberAsyncImagePainter(model = imagePath)
+            else painterResource(id = babyTheme.babyImage),
+            contentDescription = null,
+            modifier = Modifier.clip(CircleShape).size(MAIN_COLUMN_WIDTH),
+            contentScale = ContentScale.Crop
         )
 
-        Spacer(modifier = Modifier.height(15.dp))
+        Image(
+            painter = painterResource(id = babyTheme.imageBorder),
+            contentDescription = null,
+        )
+
+        val angleRadians = Math.toRadians(UPLOAD_IMG_DEGREE)
+        val radius = MAIN_COLUMN_WIDTH / 2
+
+        val xOffsetDp = (radius * cos(angleRadians).toFloat())
+        val yOffsetDp = (radius * sin(angleRadians).toFloat())
 
         Image(
-            painter = painterResource(id = R.drawable.nanit),
-            contentDescription = null
+            painter = painterResource(id = babyTheme.uploadImage),
+            contentDescription = null,
+            modifier = Modifier
+                .size(36.dp)
+                .offset(xOffsetDp, -yOffsetDp)
+                .clickable { onUploadImageClicked() }
         )
     }
 }

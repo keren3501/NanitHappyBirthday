@@ -23,15 +23,15 @@ val Typography = Typography(
     bodyMedium = TextStyle(
         fontFamily = BentonSans,
         fontWeight = FontWeight.W500,
-        fontSize = 20.sp,
-        letterSpacing = (-0.36).sp
+        fontSize = 21.sp,
+        letterSpacing = (-0.42).sp
     ),
 
     bodySmall = TextStyle(
         fontFamily = BentonSans,
         fontWeight = FontWeight.W500,
-        fontSize = 17.sp,
-        letterSpacing = (-0.10).sp
+        fontSize = 18.sp,
+        letterSpacing = (-0.36).sp
     )
 
 )

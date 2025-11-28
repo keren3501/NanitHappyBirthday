@@ -10,6 +10,7 @@ data class ThemeAssets(
     val backgroundColor: Color,
     val backgroundImage: Int,
     val babyImage: Int,
+    val imageBorder: Int,
     val uploadImage: Int
 )
 
@@ -20,6 +21,7 @@ val themes: HashMap<String, ThemeAssets> = hashMapOf(
             FoxBackgroundColor,
             R.drawable.bg_fox,
             R.drawable.baby_image_fox,
+            R.drawable.image_border_fox,
             R.drawable.upload_photo_fox
         )
     ),
@@ -29,6 +31,7 @@ val themes: HashMap<String, ThemeAssets> = hashMapOf(
             PelicanBackgroundColor,
             R.drawable.bg_pelican,
             R.drawable.baby_image_pelican,
+            R.drawable.image_border_pelican,
             R.drawable.upload_photo_pelican
         )
     ),
@@ -38,6 +41,7 @@ val themes: HashMap<String, ThemeAssets> = hashMapOf(
             ElephantBackgroundColor,
             R.drawable.bg_elephant,
             R.drawable.baby_image_elephant,
+            R.drawable.image_border_elephant,
             R.drawable.upload_photo_elephant
         )
     )

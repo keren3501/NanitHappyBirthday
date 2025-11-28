@@ -5,7 +5,12 @@ import java.time.LocalDate
 import java.time.ZoneId
 import java.time.temporal.ChronoUnit
 
-data class BirthdayData(val name: String, val dob: Long, val theme: String) {
+data class BirthdayData(
+    val name: String,
+    val dob: Long,
+    val theme: String,
+    val imagePath: String? = null
+) {
 
     private fun getAgeAsMonths(): Long {
         return ChronoUnit.MONTHS.between(

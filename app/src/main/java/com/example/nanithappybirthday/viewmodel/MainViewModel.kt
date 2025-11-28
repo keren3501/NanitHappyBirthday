@@ -1,6 +1,6 @@
 package com.example.nanithappybirthday.viewmodel
 
-import android.util.Log
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.nanithappybirthday.model.BirthdayData
@@ -28,56 +28,38 @@ class MainViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            loadSavedData()
-        }
-    }
-
-    private suspend fun loadSavedData() {
-        val savedIp = repo.getIpAddress()
-        val savedResult = repo.getLastBirthdayData()
-
-        _uiState.update {
-            it.copy(
-                ipAddress = savedIp,
-                birthdayData = savedResult
-            )
+            repo.birthdayDataFlow.collect { data ->
+                _uiState.update { it.copy(birthdayData = data) }
+            }
         }
 
-        // Make request if:
-        // 1. No cached result exists, OR
-        // 2. IP exists but doesn't match the last requested IP
-        if (savedIp.isNotEmpty() && savedResult == null) {
-            requestBirthdayFromServer()
+        viewModelScope.launch {
+            repo.ipAddressFlow.collect { ip ->
+                if (!ip.isNullOrEmpty()) {
+                    _uiState.update { it.copy(ipAddress = ip) }
+
+                    requestBirthdayFromServer()
+                }
+            }
         }
     }
 
     fun saveIpAddress(ip: String) {
         viewModelScope.launch {
             repo.saveIpAddress(ip)
-
-            _uiState.update { it.copy(ipAddress = ip) }
-
-            requestBirthdayFromServer()
         }
     }
 
     private fun requestBirthdayFromServer() {
         viewModelScope.launch {
-            try {
-                val result = repo.makeWebSocketRequest()
-                result.onSuccess { data ->
-                    repo.saveLastBirthdayData(data)
+            repo.makeWebSocketRequest()
+        }
+    }
 
-                    _uiState.update {
-                        it.copy(
-                            birthdayData = data,
-                        )
-                    }
-                }.onFailure { error ->
-                    Log.d("MainViewModel", "${error.message}")
-                }
-            } catch (e: Exception) {
-                Log.d("MainViewModel", "${e.message}")
+    fun updateBabyImage(babyImageUri: Uri?) {
+        if (babyImageUri != null) {
+            viewModelScope.launch {
+                repo.updateBabyImage(babyImageUri)
             }
         }
     }
