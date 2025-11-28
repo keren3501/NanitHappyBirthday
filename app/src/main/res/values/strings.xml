@@ -7,6 +7,6 @@
     <string name="no_ip_msg">No IP address was set yet. Press the settings button to configure it.</string>
     <string name="no_birthday_msg">Oops! No birthday data was received.</string>
     <string name="enter_ip_title">Enter IP Address:</string>
-    <string name="save_button_text">Save &amp; Request></string>
+    <string name="save_button_text">Save &amp; Request</string>
     <string name="cancel_button_text">Cancel</string>
 </resources>

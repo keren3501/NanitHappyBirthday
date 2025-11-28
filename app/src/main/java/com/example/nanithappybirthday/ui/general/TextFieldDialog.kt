@@ -17,8 +17,6 @@ import androidx.compose.ui.Modifier
 @Composable
 fun TextFieldDialog(
     title: String,
-    textFieldLabel: String = "",
-    placeHolder: String = "",
     currValue: String,
     confirmText: String,
     onConfirm: (String) -> Unit,
@@ -34,9 +32,8 @@ fun TextFieldDialog(
             Column {
                 OutlinedTextField(
                     value = valueText,
+                    textStyle = MaterialTheme.typography.bodySmall,
                     onValueChange = { valueText = it },
-                    label = { Text(textFieldLabel) },
-                    placeholder = { Text(placeHolder) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )

@@ -73,7 +73,6 @@ fun MainScreen(
     }
 
     if (showDialog) {
-        // todo add validation!
         EnterIpDialog(
             currentIp = ipAddress,
             onDismiss = { showDialog = false },
