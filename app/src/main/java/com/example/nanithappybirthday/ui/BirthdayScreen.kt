@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentWidth
@@ -81,10 +80,10 @@ fun BirthdayScreen(birthdayData: BirthdayData) {
                 painter = painterResource(theme.backgroundImage),
                 contentDescription = null,
                 modifier = Modifier
-                    .fillMaxWidth()
+                    .fillMaxSize()
                     .align(Alignment.BottomCenter),
                 alignment = Alignment.BottomCenter,
-                contentScale = ContentScale.FillWidth
+                contentScale = ContentScale.Crop
             )
         }
     }
@@ -174,7 +173,7 @@ fun BabyImageSection(
 @Composable
 fun PelicanPreview() {
     NanitHappyBirthdayTheme {
-        BirthdayScreen(BirthdayData("geffen", 1688544000, "pelican"))
+        BirthdayScreen(BirthdayData("geffen", 1754946000000, "pelican"))
     }
 }
 
@@ -182,7 +181,7 @@ fun PelicanPreview() {
 @Composable
 fun FoxPreview() {
     NanitHappyBirthdayTheme {
-        BirthdayScreen(BirthdayData("tagel", 1737072000, "fox"))
+        BirthdayScreen(BirthdayData("tagel", 1754946000000, "fox"))
     }
 }
 
@@ -190,6 +189,6 @@ fun FoxPreview() {
 @Composable
 fun ElephantPreview() {
     NanitHappyBirthdayTheme {
-        BirthdayScreen(BirthdayData("keren", 1760044800, "elephant"))
+        BirthdayScreen(BirthdayData("keren", 1754946000000, "elephant"))
     }
 }

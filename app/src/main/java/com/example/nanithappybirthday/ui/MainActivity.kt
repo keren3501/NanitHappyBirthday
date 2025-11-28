@@ -4,7 +4,6 @@ import android.annotation.SuppressLint
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -45,7 +44,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
+
         setContent {
             NanitHappyBirthdayTheme {
                 val uiState = viewModel.uiState.collectAsState().value
@@ -88,14 +87,14 @@ fun MainScreen(
             IconButton(
                 onClick = { showDialog = true },
                 modifier = Modifier
-                    .align(Alignment.TopStart)
+                    .align(Alignment.BottomEnd)
                     .padding(16.dp)
             ) {
                 Icon(
                     imageVector = Icons.Default.Settings,
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(50.dp)
+                    modifier = Modifier.size(50.dp),
                 )
             }
         }
@@ -124,7 +123,7 @@ fun IpAddressDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Enter IP Address") },
+        title = { Text("Enter IP Address", style = MaterialTheme.typography.bodyMedium) },
         text = {
             Column {
                 OutlinedTextField(
@@ -139,12 +138,12 @@ fun IpAddressDialog(
         },
         confirmButton = {
             TextButton(onClick = { onConfirm(ipText) }) {
-                Text("Save")
+                Text("Save & Request", style = MaterialTheme.typography.bodySmall)
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel")
+                Text("Cancel", style = MaterialTheme.typography.bodySmall)
             }
         }
     )
@@ -177,5 +176,7 @@ fun ScreenPreview() {
 @Preview
 @Composable
 fun DialogPreview() {
-    IpAddressDialog("192.168.1.115", {}, {})
+    NanitHappyBirthdayTheme {
+        IpAddressDialog("192.168.1.115", {}, {})
+    }
 }

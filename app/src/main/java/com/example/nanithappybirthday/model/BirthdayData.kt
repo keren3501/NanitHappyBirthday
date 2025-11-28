@@ -9,7 +9,7 @@ data class BirthdayData(val name: String, val dob: Long, val theme: String) {
 
     private fun getAgeAsMonths(): Long {
         return ChronoUnit.MONTHS.between(
-            Instant.ofEpochSecond(dob).atZone(ZoneId.systemDefault()).toLocalDate(),
+            Instant.ofEpochMilli(dob).atZone(ZoneId.systemDefault()).toLocalDate(),
             LocalDate.now()
         )
     }

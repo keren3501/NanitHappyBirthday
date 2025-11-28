@@ -64,9 +64,8 @@ class MainViewModel @Inject constructor(
     private fun requestBirthdayFromServer() {
         viewModelScope.launch {
             try {
-                val result = repo.makeHttpRequest()
+                val result = repo.makeWebSocketRequest()
                 result.onSuccess { data ->
-                    // Save to DataStore for persistence
                     repo.saveLastBirthdayData(data)
 
                     _uiState.update {

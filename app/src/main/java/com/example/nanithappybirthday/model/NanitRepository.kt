@@ -1,6 +1,7 @@
 package com.example.nanithappybirthday.model
 
 import android.content.Context
+import android.util.Log
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
@@ -8,17 +9,18 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.google.gson.Gson
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
-import okhttp3.MediaType.Companion.toMediaType
+import kotlinx.coroutines.withTimeout
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import okhttp3.RequestBody.Companion.toRequestBody
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.time.Duration.Companion.seconds
 
 private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
 
@@ -63,7 +65,7 @@ class NanitRepository @Inject constructor(
         }
     }
 
-    suspend fun makeHttpRequest(): Result<BirthdayData> = withContext(Dispatchers.IO) {
+    suspend fun makeWebSocketRequest(): Result<BirthdayData> = withContext(Dispatchers.IO) {
         try {
             val ip = getIpAddress()
             if (ip.isEmpty()) {
@@ -72,29 +74,47 @@ class NanitRepository @Inject constructor(
 
             val client = OkHttpClient.Builder()
                 .connectTimeout(10, TimeUnit.SECONDS)
-                .readTimeout(10, TimeUnit.SECONDS)
                 .build()
-
-            val requestBody = "HappyBirthday".toRequestBody("text/plain".toMediaType())
 
             val request = Request.Builder()
-                .url("http://$ip:8080/nanit")
-                .post(requestBody)
+                .url("ws://$ip:8080/nanit")
                 .build()
 
-            client.newCall(request).execute().use { response ->
-                if (response.isSuccessful) {
-                    val body = response.body?.string()
-                    val birthdayData = gson.fromJson(body, BirthdayData::class.java)
-                    Result.success(birthdayData)
-                } else {
-                    Result.failure(Exception("HTTP Error: ${response.code} - ${response.body?.string()}"))
+            val deferred = CompletableDeferred<Result<BirthdayData>>()
+
+            client.newWebSocket(request, object : okhttp3.WebSocketListener() {
+                override fun onOpen(webSocket: okhttp3.WebSocket, response: okhttp3.Response) {
+                    Log.d("NanitRepo", "WebSocket connected")
+                    webSocket.send("HappyBirthday")
                 }
+
+                override fun onMessage(webSocket: okhttp3.WebSocket, text: String) {
+                    Log.d("NanitRepo", "Received: $text")
+                    try {
+                        val birthdayData = gson.fromJson(text, BirthdayData::class.java)
+                        deferred.complete(Result.success(birthdayData))
+                    } catch (e: Exception) {
+                        deferred.complete(Result.failure(e))
+                    }
+                    webSocket.close(1000, "Done")
+                }
+
+                override fun onFailure(webSocket: okhttp3.WebSocket, t: Throwable, response: okhttp3.Response?) {
+                    Log.d("NanitRepo", "WebSocket failed: ${t.message}")
+                    deferred.complete(Result.failure(t))
+                }
+
+                override fun onClosed(webSocket: okhttp3.WebSocket, code: Int, reason: String) {
+                    Log.d("NanitRepo", "WebSocket closed: $code - $reason")
+                }
+            })
+
+            withTimeout(10.seconds.inWholeMilliseconds) {
+                deferred.await()
             }
         } catch (e: Exception) {
             Result.failure(e)
         }
     }
-
 
 }
